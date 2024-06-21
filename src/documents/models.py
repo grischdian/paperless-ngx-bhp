@@ -114,6 +114,11 @@ class Tag(MatchingModel):
         verbose_name = _("tag")
         verbose_name_plural = _("tags")
 
+class Customer(MatchingModel):
+    color = models.CharField(_("color"), max_length=7, default="#ffffff")
+    class Meta(MatchingModel.Meta):
+        verbose_name = _("customer")
+        verbose_name_plural = _("customers")
 
 class DocumentType(MatchingModel):
     class Meta(MatchingModel.Meta):
@@ -185,6 +190,13 @@ class Document(SoftDeleteModel, ModelWithOwner):
         related_name="documents",
         blank=True,
         verbose_name=_("tags"),
+    )
+
+    customer = models.ManyToManyField(
+        Customer,
+        related_name="documents",
+        blank=True,
+        verbose_name=_("mandate"),
     )
 
     checksum = models.CharField(
