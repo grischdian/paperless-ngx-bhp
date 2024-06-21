@@ -97,6 +97,7 @@ class Correspondent(MatchingModel):
         verbose_name = _("correspondent")
         verbose_name_plural = _("correspondents")
 
+
 class Tag(MatchingModel):
     color = models.CharField(_("color"), max_length=7, default="#a6cee3")
 
