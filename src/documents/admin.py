@@ -68,7 +68,7 @@ class DocumentAdmin(GuardedModelAdmin):
         ("archive_filename", admin.EmptyFieldListFilter),
     )
 
-    filter_horizontal = ("tags","customer")
+    filter_horizontal = ("tags", "customer")
 
     ordering = ["-id"]
 
