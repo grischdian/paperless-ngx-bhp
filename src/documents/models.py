@@ -97,7 +97,6 @@ class Correspondent(MatchingModel):
         verbose_name = _("correspondent")
         verbose_name_plural = _("correspondents")
 
-
 class Tag(MatchingModel):
     color = models.CharField(_("color"), max_length=7, default="#a6cee3")
 
@@ -114,11 +113,14 @@ class Tag(MatchingModel):
         verbose_name = _("tag")
         verbose_name_plural = _("tags")
 
+
 class Customer(MatchingModel):
     color = models.CharField(_("color"), max_length=7, default="#ffffff")
+
     class Meta(MatchingModel.Meta):
         verbose_name = _("customer")
         verbose_name_plural = _("customers")
+
 
 class DocumentType(MatchingModel):
     class Meta(MatchingModel.Meta):

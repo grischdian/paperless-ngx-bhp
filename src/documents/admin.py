@@ -32,11 +32,13 @@ class TagAdmin(GuardedModelAdmin):
     list_editable = ("color", "match", "matching_algorithm")
     search_fields = ("color", "name")
 
+
 class CustomerAdmin(GuardedModelAdmin):
     list_display = ("name", "color", "match", "matching_algorithm")
     list_filter = ("matching_algorithm",)
     list_editable = ("color", "match", "matching_algorithm")
     search_fields = ("color", "name")
+
 
 class DocumentTypeAdmin(GuardedModelAdmin):
     list_display = ("name", "match", "matching_algorithm")
