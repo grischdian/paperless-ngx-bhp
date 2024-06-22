@@ -2,7 +2,7 @@
 
 import django.db.models.deletion
 from django.conf import settings
-from django.db import migrations, models
+from django.db import migrations
 from django.db import models
 
 
@@ -16,13 +16,56 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Customer",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=128, verbose_name="name")),
-                ("match", models.CharField(blank=True, max_length=256, verbose_name="match")),
-                ("matching_algorithm", models.PositiveIntegerField(choices=[(0, "None"), (1, "Any word"), (2, "All words"), (3, "Exact match"), (4, "Regular expression"), (5, "Fuzzy word"), (6, "Automatic")], default=1, verbose_name="matching algorithm")),
-                ("is_insensitive", models.BooleanField(default=True, verbose_name="is insensitive")),
-                ("color", models.CharField(default="#ffffff", max_length=7, verbose_name="color")),
-                ("owner", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name="owner")),
+                (
+                    "match",
+                    models.CharField(blank=True, max_length=256, verbose_name="match"),
+                ),
+                (
+                    "matching_algorithm",
+                    models.PositiveIntegerField(
+                        choices=[
+                            (0, "None"),
+                            (1, "Any word"),
+                            (2, "All words"),
+                            (3, "Exact match"),
+                            (4, "Regular expression"),
+                            (5, "Fuzzy word"),
+                            (6, "Automatic")
+                        ],
+                        default=1,
+                        verbose_name="matching algorithm",
+                    ),
+                ),
+                (
+                    "is_insensitive",
+                    models.BooleanField(default=True, verbose_name="is insensitive"),
+                ),
+                (
+                    "color",
+                    models.CharField(
+                        default="#ffffff", max_length=7, verbose_name="color"
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="owner",
+                    ),
+                ),
             ],
             options={
                 "verbose_name": "customer",
@@ -34,14 +77,24 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="document",
             name="customer",
-            field=models.ManyToManyField(blank=True, related_name="documents", to="documents.customer", verbose_name="mandate"),
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="documents",
+                to="documents.customer",
+                verbose_name="mandate"),
         ),
         migrations.AddConstraint(
             model_name="customer",
-            constraint=models.UniqueConstraint(fields=("name", "owner"), name="documents_customer_unique_name_owner"),
+            constraint=models.UniqueConstraint(
+                fields=("name", "owner"), name="documents_customer_unique_name_owner"
+            ),
         ),
         migrations.AddConstraint(
             model_name="customer",
-            constraint=models.UniqueConstraint(condition=models.Q(("owner__isnull", True)), fields=("name",), name="documents_customer_name_uniq"),
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("owner__isnull", True)),
+                fields=("name",),
+                name="documents_customer_name_uniq",
+            ),
         ),
     ]
