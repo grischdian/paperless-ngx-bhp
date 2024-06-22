@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                             (3, "Exact match"),
                             (4, "Regular expression"),
                             (5, "Fuzzy word"),
-                            (6, "Automatic")
+                            (6, "Automatic"),
                         ],
                         default=1,
                         verbose_name="matching algorithm",
@@ -53,7 +53,9 @@ class Migration(migrations.Migration):
                 (
                     "color",
                     models.CharField(
-                        default="#ffffff", max_length=7, verbose_name="color"
+                        default="#ffffff",
+                        max_length=7,
+                        verbose_name="color",
                     ),
                 ),
                 (
@@ -81,12 +83,14 @@ class Migration(migrations.Migration):
                 blank=True,
                 related_name="documents",
                 to="documents.customer",
-                verbose_name="mandate"),
+                verbose_name="mandate",
+            ),
         ),
         migrations.AddConstraint(
             model_name="customer",
             constraint=models.UniqueConstraint(
-                fields=("name", "owner"), name="documents_customer_unique_name_owner"
+                fields=("name", "owner"),
+                name="documents_customer_unique_name_owner",
             ),
         ),
         migrations.AddConstraint(
