@@ -854,7 +854,7 @@ class SearchResultSerializer(DocumentSerializer):
                 "document_type",
                 "owner",
             )
-            .prefetch_related("tags", "custom_fields", "notes", "custoemr")
+            .prefetch_related("tags", "custom_fields", "notes", "customer")
             .get(id=instance["id"])
         )
         notes = ",".join(
