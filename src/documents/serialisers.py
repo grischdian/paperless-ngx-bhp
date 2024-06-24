@@ -1150,7 +1150,7 @@ class BulkEditSerializer(
         if "remove_customers" in parameters:
             self._validate_tag_id_list(
                 parameters["remove_customers"],
-                "remove_customers"
+                "remove_customers",
             )
         else:
             raise serializers.ValidationError("remove_customers not specified")
