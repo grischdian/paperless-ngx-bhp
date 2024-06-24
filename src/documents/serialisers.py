@@ -1882,6 +1882,7 @@ class WorkflowSerializer(serializers.ModelSerializer):
         if actions is not None:
             for action in actions:
                 assign_tags = action.pop("assign_tags", None)
+                assign_customers = action.pip("assign_customers", None)
                 assign_view_users = action.pop("assign_view_users", None)
                 assign_view_groups = action.pop("assign_view_groups", None)
                 assign_change_users = action.pop("assign_change_users", None)
