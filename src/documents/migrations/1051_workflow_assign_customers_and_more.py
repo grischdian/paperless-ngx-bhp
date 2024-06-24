@@ -17,14 +17,15 @@ class Migration(migrations.Migration):
                 blank=True,
                 related_name="+",
                 to="documents.customer",
-                verbose_name="assign this customer"
+                verbose_name="assign this customer",
             ),
         ),
         migrations.AddField(
             model_name="workflowaction",
             name="remove_all_customers",
             field=models.BooleanField(
-                default=False, verbose_name="remove all customers"
+                default=False,
+                verbose_name="remove all customers",
             ),
         ),
         migrations.AddField(
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 related_name="+",
                 to="documents.customer",
-                verbose_name="remove these customer(s)"
+                verbose_name="remove these customer(s)",
             ),
         ),
         migrations.AddField(
@@ -43,7 +44,7 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(
                 blank=True,
                 to="documents.customer",
-                verbose_name="has these Customer(s)"
+                verbose_name="has these Customer(s)",
             ),
         ),
         migrations.AlterField(
@@ -95,7 +96,7 @@ class Migration(migrations.Migration):
                     (41, "has customer"),
                     (42, "has any customer"),
                     (43, "does not have customer"),
-                    (44, "has customers in")
+                    (44, "has customers in"),
                 ],
                 verbose_name="rule type",
             ),
