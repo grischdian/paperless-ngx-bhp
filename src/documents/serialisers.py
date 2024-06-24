@@ -419,12 +419,11 @@ class TagSerializer(MatchingModelSerializer, OwnedObjectSerializer):
 
     text_color = serializers.SerializerMethodField()
 
-
     class CustomerSerializer(MatchingModelSerializer, OwnedObjectSerializer):
         def get_text_color(self, obj):
             try:
                 h = obj.color.lstrip("#")
-                rgb = tuple(int(h[i: i + 2], 16) / 256 for i in (0, 2, 4))
+                rgb = tuple(int(h[i : i + 2], 16) / 256 for i in (0, 2, 4))
                 luminance = math.sqrt(
                     0.299 * math.pow(rgb[0], 2)
                     + 0.587 * math.pow(rgb[1], 2)
@@ -474,6 +473,7 @@ class TagsField(serializers.PrimaryKeyRelatedField):
 class CustomerField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         return Customer.objects.all()
+
 
 class DocumentTypeField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
@@ -1148,7 +1148,9 @@ class BulkEditSerializer(
             raise serializers.ValidationError("add_customers not specified")
 
         if "remove_customers" in parameters:
-            self._validate_tag_id_list(parameters["remove_customers"], "remove_customers")
+            self._validate_tag_id_list(
+                parameters["remove_customers"], "remove_customers"
+            )
         else:
             raise serializers.ValidationError("remove_customers not specified")
 
