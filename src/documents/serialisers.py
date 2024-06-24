@@ -1047,11 +1047,11 @@ class BulkEditSerializer(
         elif method == "modify_tags":
             return bulk_edit.modify_tags
         elif method == "add_customer":
-            return bulk_edit.add_tag
+            return bulk_edit.add_customer
         elif method == "remove_customer":
-            return bulk_edit.remove_tag
+            return bulk_edit.remove_customer
         elif method == "modify_customer":
-            return bulk_edit.modify_tags
+            return bulk_edit.modify_customers
         elif method == "modify_custom_fields":
             return bulk_edit.modify_custom_fields
         elif method == "delete":
