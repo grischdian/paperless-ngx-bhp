@@ -138,7 +138,7 @@ def modify_tags(doc_ids: list[int], add_tags: list[int], remove_tags: list[int])
 
 def add_customer(doc_ids: list[int], customer: int):
     qs = Document.objects.filter(Q(id__in=doc_ids) & ~Q(customers__id=custoemr)).only(
-        "pk"
+        "pk",
     )
     affected_docs = list(qs.values_list("pk", flat=True))
 
@@ -158,7 +158,7 @@ def add_customer(doc_ids: list[int], customer: int):
 
 def remove_customer(doc_ids: list[int], customer: int):
     qs = Document.objects.filter(Q(id__in=doc_ids) & Q(customers__id=customer)).only(
-        "pk"
+        "pk",
     )
     affected_docs = list(qs.values_list("pk", flat=True))
 
@@ -174,7 +174,9 @@ def remove_customer(doc_ids: list[int], customer: int):
 
 
 def modify_customers(
-    doc_ids: list[int], add_customers: list[int], remove_customers: list[int]
+    doc_ids: list[int],
+    add_customers: list[int],
+    remove_customers: list[int],
 ):
     qs = Document.objects.filter(id__in=doc_ids).only("pk")
     affected_docs = list(qs.values_list("pk", flat=True))
