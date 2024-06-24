@@ -137,7 +137,7 @@ def modify_tags(doc_ids: list[int], add_tags: list[int], remove_tags: list[int])
 
 
 def add_customer(doc_ids: list[int], customer: int):
-    qs = Document.objects.filter(Q(id__in=doc_ids) & ~Q(customers__id=custoemr)).only(
+    qs = Document.objects.filter(Q(id__in=doc_ids) & ~Q(customers__id=customer)).only(
         "pk",
     )
     affected_docs = list(qs.values_list("pk", flat=True))
