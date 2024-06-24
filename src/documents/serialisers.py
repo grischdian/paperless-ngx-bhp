@@ -33,6 +33,7 @@ if settings.AUDIT_LOG_ENABLED:
 from documents import bulk_edit
 from documents.data_models import DocumentSource
 from documents.models import Correspondent
+from documents.models import Customer
 from documents.models import CustomField
 from documents.models import CustomFieldInstance
 from documents.models import Document
@@ -381,6 +382,27 @@ class TagSerializerVersion1(MatchingModelSerializer, OwnedObjectSerializer):
         )
 
 
+class CustomerSerializerVersion1(MatchingModelSerializer, OwnedObjectSerializer):
+    colour = ColorField(source="color", default="#a6cee3")
+
+    class Meta:
+        model = Customer
+        fields = (
+            "id",
+            "slug",
+            "name",
+            "colour",
+            "match",
+            "matching_algorithm",
+            "is_insensitive",
+            "document_count",
+            "owner",
+            "permissions",
+            "user_can_change",
+            "set_permissions",
+        )
+
+
 class TagSerializer(MatchingModelSerializer, OwnedObjectSerializer):
     def get_text_color(self, obj):
         try:
@@ -397,8 +419,25 @@ class TagSerializer(MatchingModelSerializer, OwnedObjectSerializer):
 
     text_color = serializers.SerializerMethodField()
 
+
+    class CustomerSerializer(MatchingModelSerializer, OwnedObjectSerializer):
+        def get_text_color(self, obj):
+            try:
+                h = obj.color.lstrip("#")
+                rgb = tuple(int(h[i: i + 2], 16) / 256 for i in (0, 2, 4))
+                luminance = math.sqrt(
+                    0.299 * math.pow(rgb[0], 2)
+                    + 0.587 * math.pow(rgb[1], 2)
+                    + 0.114 * math.pow(rgb[2], 2),
+                )
+                return "#ffffff" if luminance < 0.53 else "#000000"
+            except ValueError:
+                return "#000000"
+
+        text_color = serializers.SerializerMethodField()
+
     class Meta:
-        model = Tag
+        model = Customer
         fields = (
             "id",
             "slug",
@@ -408,7 +447,6 @@ class TagSerializer(MatchingModelSerializer, OwnedObjectSerializer):
             "match",
             "matching_algorithm",
             "is_insensitive",
-            "is_inbox_tag",
             "document_count",
             "owner",
             "permissions",
@@ -432,6 +470,10 @@ class TagsField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         return Tag.objects.all()
 
+
+class CustomerField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        return Customer.objects.all()
 
 class DocumentTypeField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
@@ -655,6 +697,7 @@ class DocumentSerializer(
     NestedUpdateMixin,
     DynamicFieldsModelSerializer,
 ):
+    customer = CustomerField(many=True)
     correspondent = CorrespondentField(allow_null=True)
     tags = TagsField(many=True)
     document_type = DocumentTypeField(allow_null=True)
@@ -776,6 +819,7 @@ class DocumentSerializer(
         depth = 1
         fields = (
             "id",
+            "customer",
             "correspondent",
             "document_type",
             "storage_path",
@@ -810,7 +854,7 @@ class SearchResultSerializer(DocumentSerializer):
                 "document_type",
                 "owner",
             )
-            .prefetch_related("tags", "custom_fields", "notes")
+            .prefetch_related("tags", "custom_fields", "notes", "custoemr")
             .get(id=instance["id"])
         )
         notes = ",".join(
@@ -938,6 +982,9 @@ class BulkEditSerializer(
             "add_tag",
             "remove_tag",
             "modify_tags",
+            "add_customer",
+            "remove_customer",
+            "modify_customer",
             "modify_custom_fields",
             "delete",
             "reprocess",
@@ -960,6 +1007,17 @@ class BulkEditSerializer(
             raise serializers.ValidationError(f"{name} must be a list of integers")
         count = Tag.objects.filter(id__in=tags).count()
         if not count == len(tags):
+            raise serializers.ValidationError(
+                f"Some tags in {name} don't exist or were specified twice.",
+            )
+
+    def _validate_customer_id_list(self, customers, name="customers"):
+        if not isinstance(customers, list):
+            raise serializers.ValidationError(f"{name} must be a list")
+        if not all(isinstance(i, int) for i in customers):
+            raise serializers.ValidationError(f"{name} must be a list of integers")
+        count = Customer.objects.filter(id__in=customers).count()
+        if not count == len(customers):
             raise serializers.ValidationError(
                 f"Some tags in {name} don't exist or were specified twice.",
             )
@@ -987,6 +1045,12 @@ class BulkEditSerializer(
         elif method == "remove_tag":
             return bulk_edit.remove_tag
         elif method == "modify_tags":
+            return bulk_edit.modify_tags
+        elif method == "add_customer":
+            return bulk_edit.add_tag
+        elif method == "remove_customer":
+            return bulk_edit.remove_tag
+        elif method == "modify_customer":
             return bulk_edit.modify_tags
         elif method == "modify_custom_fields":
             return bulk_edit.modify_custom_fields
@@ -1016,6 +1080,16 @@ class BulkEditSerializer(
                 raise serializers.ValidationError("Tag does not exist")
         else:
             raise serializers.ValidationError("tag not specified")
+
+    def _validate_parameters_customers(self, parameters):
+        if "customer" in parameters:
+            customer_id = parameters["customer"]
+            try:
+                Customer.objects.get(id=customer_id)
+            except Customer.DoesNotExist:
+                raise serializers.ValidationError("Customer does not exist")
+        else:
+            raise serializers.ValidationError("customer not specified")
 
     def _validate_parameters_document_type(self, parameters):
         if "document_type" in parameters:
@@ -1066,6 +1140,17 @@ class BulkEditSerializer(
             self._validate_tag_id_list(parameters["remove_tags"], "remove_tags")
         else:
             raise serializers.ValidationError("remove_tags not specified")
+
+    def _validate_parameters_modify_customers(self, parameters):
+        if "add_customers" in parameters:
+            self._validate_tag_id_list(parameters["add_customers"], "add_customers")
+        else:
+            raise serializers.ValidationError("add_customers not specified")
+
+        if "remove_customers" in parameters:
+            self._validate_tag_id_list(parameters["remove_customers"], "remove_customers")
+        else:
+            raise serializers.ValidationError("remove_customers not specified")
 
     def _validate_parameters_modify_custom_fields(self, parameters):
         if "add_custom_fields" in parameters:
@@ -1165,6 +1250,10 @@ class BulkEditSerializer(
             self._validate_parameters_tags(parameters)
         elif method == bulk_edit.modify_tags:
             self._validate_parameters_modify_tags(parameters)
+        elif method == bulk_edit.add_customer or method == bulk_edit.remove_customer:
+            self._validate_parameters_customers(parameters)
+        elif method == bulk_edit.modify_customers:
+            self._validate_parameters_modify_customers(parameters)
         elif method == bulk_edit.set_storage_path:
             self._validate_storage_path(parameters)
         elif method == bulk_edit.modify_custom_fields:
@@ -1242,6 +1331,14 @@ class PostDocumentSerializer(serializers.Serializer):
         required=False,
     )
 
+    customers = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Customer.objects.all(),
+        label="Customers",
+        write_only=True,
+        required=False,
+    )
+
     archive_serial_number = serializers.IntegerField(
         label="ASN",
         write_only=True,
@@ -1290,6 +1387,12 @@ class PostDocumentSerializer(serializers.Serializer):
     def validate_tags(self, tags):
         if tags:
             return [tag.id for tag in tags]
+        else:
+            return None
+
+    def validate_customers(self, customers):
+        if customers:
+            return [customer.id for customer in customers]
         else:
             return None
 
@@ -1366,6 +1469,8 @@ class StoragePathSerializer(MatchingModelSerializer, OwnedObjectSerializer):
                 added_day="added_day",
                 asn="asn",
                 tags="tags",
+                customers="customers",
+                customer_list="customer_list",
                 tag_list="tag_list",
                 owner_username="someone",
                 original_name="testfile",
@@ -1505,6 +1610,7 @@ class BulkEditObjectsSerializer(SerializerWithPerms, SetPermissionsMixin):
     object_type = serializers.ChoiceField(
         choices=[
             "tags",
+            "customers",
             "correspondents",
             "document_types",
             "storage_paths",
@@ -1546,6 +1652,8 @@ class BulkEditObjectsSerializer(SerializerWithPerms, SetPermissionsMixin):
         object_class = None
         if object_type == "tags":
             object_class = Tag
+        elif object_type == "customers":
+            object_class = Customer
         elif object_type == "correspondents":
             object_class = Correspondent
         elif object_type == "document_types":
@@ -1653,6 +1761,7 @@ class WorkflowActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     assign_correspondent = CorrespondentField(allow_null=True, required=False)
     assign_tags = TagsField(many=True, allow_null=True, required=False)
+    assign_customers = CustomerField(many=True, allow_null=True, required=False)
     assign_document_type = DocumentTypeField(allow_null=True, required=False)
     assign_storage_path = StoragePathField(allow_null=True, required=False)
 
@@ -1663,6 +1772,7 @@ class WorkflowActionSerializer(serializers.ModelSerializer):
             "type",
             "assign_title",
             "assign_tags",
+            "assign_customers",
             "assign_correspondent",
             "assign_document_type",
             "assign_storage_path",
@@ -1674,6 +1784,8 @@ class WorkflowActionSerializer(serializers.ModelSerializer):
             "assign_custom_fields",
             "remove_all_tags",
             "remove_tags",
+            "remove_all_customers",
+            "remove_customers",
             "remove_all_correspondents",
             "remove_correspondents",
             "remove_all_document_types",
@@ -1753,12 +1865,15 @@ class WorkflowSerializer(serializers.ModelSerializer):
         if triggers is not None:
             for trigger in triggers:
                 filter_has_tags = trigger.pop("filter_has_tags", None)
+                filter_has_customers = trigger.pop("filter_has_customers", None)
                 trigger_instance, _ = WorkflowTrigger.objects.update_or_create(
                     id=trigger.get("id"),
                     defaults=trigger,
                 )
                 if filter_has_tags is not None:
                     trigger_instance.filter_has_tags.set(filter_has_tags)
+                if filter_has_customers is not None:
+                    trigger_instance.filter_has_customers.set(filter_has_customers)
                 set_triggers.append(trigger_instance)
 
         if actions is not None:
@@ -1770,6 +1885,7 @@ class WorkflowSerializer(serializers.ModelSerializer):
                 assign_change_groups = action.pop("assign_change_groups", None)
                 assign_custom_fields = action.pop("assign_custom_fields", None)
                 remove_tags = action.pop("remove_tags", None)
+                remove_customers = action.pop("remove_customers", None)
                 remove_correspondents = action.pop("remove_correspondents", None)
                 remove_document_types = action.pop("remove_document_types", None)
                 remove_storage_paths = action.pop("remove_storage_paths", None)
@@ -1787,6 +1903,8 @@ class WorkflowSerializer(serializers.ModelSerializer):
 
                 if assign_tags is not None:
                     action_instance.assign_tags.set(assign_tags)
+                if assign_customers is not None:
+                    action_instance.assign_customers.set(assign_customers)
                 if assign_view_users is not None:
                     action_instance.assign_view_users.set(assign_view_users)
                 if assign_view_groups is not None:
@@ -1799,6 +1917,8 @@ class WorkflowSerializer(serializers.ModelSerializer):
                     action_instance.assign_custom_fields.set(assign_custom_fields)
                 if remove_tags is not None:
                     action_instance.remove_tags.set(remove_tags)
+                if remove_customers is not None:
+                    action_instance.remove_customers.set(remove_customers)
                 if remove_correspondents is not None:
                     action_instance.remove_correspondents.set(remove_correspondents)
                 if remove_document_types is not None:
