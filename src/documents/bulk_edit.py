@@ -137,13 +137,18 @@ def modify_tags(doc_ids: list[int], add_tags: list[int], remove_tags: list[int])
 
 
 def add_customer(doc_ids: list[int], customer: int):
-    qs = Document.objects.filter(Q(id__in=doc_ids) & ~Q(customers__id=custoemr)).only("pk")
+    qs = Document.objects.filter(Q(id__in=doc_ids) & ~Q(customers__id=custoemr)).only(
+        "pk"
+    )
     affected_docs = list(qs.values_list("pk", flat=True))
 
     DocumentCustomerRelationship = Document.customers.through
 
     DocumentCustomerRelationship.objects.bulk_create(
-        [DocumentCustomerRelationship(document_id=doc, customer_id=customer) for doc in affected_docs],
+        [
+            DocumentCustomerRelationship(document_id=doc, customer_id=customer)
+            for doc in affected_docs
+        ],
     )
 
     bulk_update_documents.delay(document_ids=affected_docs)
@@ -152,21 +157,25 @@ def add_customer(doc_ids: list[int], customer: int):
 
 
 def remove_customer(doc_ids: list[int], customer: int):
-    qs = Document.objects.filter(Q(id__in=doc_ids) & Q(customers__id=customer)).only("pk")
+    qs = Document.objects.filter(Q(id__in=doc_ids) & Q(customers__id=customer)).only(
+        "pk"
+    )
     affected_docs = list(qs.values_list("pk", flat=True))
 
     DocumentCustomerRelationship = Document.customers.through
 
     DocumentCustomerRelationship.objects.filter(
         Q(document_id__in=affected_docs) & Q(customer_id=customer),
-        ).delete()
+    ).delete()
 
     bulk_update_documents.delay(document_ids=affected_docs)
 
     return "OK"
 
 
-def modify_customers(doc_ids: list[int], add_customers: list[int], remove_customers: list[int]):
+def modify_customers(
+    doc_ids: list[int], add_customers: list[int], remove_customers: list[int]
+):
     qs = Document.objects.filter(id__in=doc_ids).only("pk")
     affected_docs = list(qs.values_list("pk", flat=True))
 
