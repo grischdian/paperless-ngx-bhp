@@ -421,6 +421,7 @@ class SavedView(ModelWithOwner):
         CREATED = ("created", _("Created"))
         ADDED = ("added", _("Added"))
         TAGS = ("tag"), _("Tags")
+        CUSTOMERS = ("customer"), _("Customers")
         CORRESPONDENT = ("correspondent", _("Correspondent"))
         DOCUMENT_TYPE = ("documenttype", _("Document Type"))
         STORAGE_PATH = ("storagepath", _("Storage Path"))
@@ -520,7 +521,10 @@ class SavedViewFilterRule(models.Model):
         (38, _("has custom fields")),
         (39, _("has custom field in")),
         (40, _("does not have custom field in")),
-        (41, _("does not have custom field")),
+        (41, _("has customer")),
+        (42, _("has any customer")),
+        (43, _("does not have customer")),
+        (44, _("has customers in")),
     ]
 
     saved_view = models.ForeignKey(
@@ -567,6 +571,7 @@ class FileInfo:
         correspondent=None,
         title=None,
         tags=(),
+        customers=(),
         extension=None,
     ):
         self.created = created
@@ -574,6 +579,7 @@ class FileInfo:
         self.extension = extension
         self.correspondent = correspondent
         self.tags = tags
+        self.customers = customers
 
     @classmethod
     def _get_created(cls, created):
@@ -1035,6 +1041,11 @@ class WorkflowTrigger(models.Model):
         blank=True,
         verbose_name=_("has these tag(s)"),
     )
+    filter_has_customers = models.ManyToManyField(
+        Customer,
+        blank=True,
+        verbose_name=_("has these Customer(s)"),
+    )
 
     filter_has_document_type = models.ForeignKey(
         DocumentType,
@@ -1093,6 +1104,13 @@ class WorkflowAction(models.Model):
         blank=True,
         related_name="+",
         verbose_name=_("assign this tag"),
+    )
+
+    assign_customers = models.ManyToManyField(
+        Customer,
+        blank=True,
+        related_name="+",
+        verbose_name=_("assign this customer"),
     )
 
     assign_document_type = models.ForeignKey(
@@ -1173,9 +1191,21 @@ class WorkflowAction(models.Model):
         verbose_name=_("remove these tag(s)"),
     )
 
+    remove_customers = models.ManyToManyField(
+        Customer,
+        blank=True,
+        related_name="+",
+        verbose_name=_("remove these customer(s)"),
+    )
+
     remove_all_tags = models.BooleanField(
         default=False,
         verbose_name=_("remove all tags"),
+    )
+
+    remove_all_customers = models.BooleanField(
+        default=False,
+        verbose_name=_("remove all customers"),
     )
 
     remove_document_types = models.ManyToManyField(
