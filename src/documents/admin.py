@@ -194,6 +194,7 @@ class CustomFieldInstancesAdmin(GuardedModelAdmin):
 
 admin.site.register(Correspondent, CorrespondentAdmin)
 admin.site.register(Tag, TagAdmin)
+admin.site.register(Customer, CustomerAdmin)
 admin.site.register(DocumentType, DocumentTypeAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(SavedView, SavedViewAdmin)
