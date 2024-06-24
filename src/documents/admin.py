@@ -3,6 +3,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
 from documents.models import Correspondent
+from documents.models import Customer
 from documents.models import CustomField
 from documents.models import CustomFieldInstance
 from documents.models import Document
@@ -14,7 +15,6 @@ from documents.models import SavedViewFilterRule
 from documents.models import ShareLink
 from documents.models import StoragePath
 from documents.models import Tag
-from documents.models import Customer
 
 if settings.AUDIT_LOG_ENABLED:
     from auditlog.admin import LogEntryAdmin
