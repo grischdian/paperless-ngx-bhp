@@ -12,6 +12,7 @@ from guardian.utils import get_user_obj_perms_model
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from documents.models import Correspondent
+from documents.models import Customer
 from documents.models import CustomField
 from documents.models import Document
 from documents.models import DocumentType
@@ -29,6 +30,15 @@ DATE_KWARGS = ["year", "month", "day", "date__gt", "gt", "date__lt", "lt"]
 class CorrespondentFilterSet(FilterSet):
     class Meta:
         model = Correspondent
+        fields = {
+            "id": ID_KWARGS,
+            "name": CHAR_KWARGS,
+        }
+
+
+class CustomerFilterSet(FilterSet):
+    class Meta:
+        model = Customer
         fields = {
             "id": ID_KWARGS,
             "name": CHAR_KWARGS,
@@ -185,6 +195,12 @@ class DocumentFilterSet(FilterSet):
 
     tags__id__in = ObjectFilter(field_name="tags", in_list=True)
 
+    customers__id__all = ObjectFilter(field_name="customers")
+
+    customers__id__none = ObjectFilter(field_name="customers", exclude=True)
+
+    customers__id__in = ObjectFilter(field_name="customers", in_list=True)
+
     correspondent__id__none = ObjectFilter(field_name="correspondent", exclude=True)
 
     document_type__id__none = ObjectFilter(field_name="document_type", exclude=True)
@@ -235,6 +251,8 @@ class DocumentFilterSet(FilterSet):
             "correspondent": ["isnull"],
             "correspondent__id": ID_KWARGS,
             "correspondent__name": CHAR_KWARGS,
+            "customers__id": ID_KWARGS,
+            "customers__name": CHAR_KWARGS,
             "tags__id": ID_KWARGS,
             "tags__name": CHAR_KWARGS,
             "document_type": ["isnull"],
