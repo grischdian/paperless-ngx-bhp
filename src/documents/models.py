@@ -195,7 +195,7 @@ class Document(SoftDeleteModel, ModelWithOwner):
         verbose_name=_("tags"),
     )
 
-    customer = models.ManyToManyField(
+    customers = models.ManyToManyField(
         Customer,
         related_name="documents",
         blank=True,
