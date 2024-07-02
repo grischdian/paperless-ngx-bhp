@@ -6,6 +6,7 @@ from typing import Union
 from documents.classifier import DocumentClassifier
 from documents.data_models import ConsumableDocument
 from documents.data_models import DocumentSource
+from documents.models import Customer
 from documents.models import Correspondent
 from documents.models import Document
 from documents.models import DocumentType
@@ -77,6 +78,29 @@ def match_document_types(document: Document, classifier: DocumentClassifier, use
             lambda o: matches(o, document)
             or (o.pk == pred_id and o.matching_algorithm == MatchingModel.MATCH_AUTO),
             document_types,
+        ),
+    )
+
+
+def match_customers(document: Document, classifier: DocumentClassifier, user=None):
+    predicted_customer_ids = classifier.predict_customers(document.content) if classifier else []
+
+    if user is None and document.owner is not None:
+        user = document.owner
+
+    if user is not None:
+        customers = get_objects_for_user_owner_aware(user, "documents.view_customer", Customer)
+    else:
+        customers = Tag.objects.all()
+
+    return list(
+        filter(
+            lambda o: matches(o, document)
+                      or (
+                          o.matching_algorithm == MatchingModel.MATCH_AUTO
+                          and o.pk in predicted_customer_ids
+                      ),
+            customers,
         ),
     )
 
@@ -343,6 +367,20 @@ def existing_document_matches_workflow(
         reason = (
             f"Document tags {document.tags.all()} do not include"
             f" {trigger.filter_has_tags.all()}",
+        )
+        trigger_matched = False
+
+
+    if (
+        trigger.filter_has_customers.all().count() > 0
+        and document.customers.filter(
+        id__in=trigger.filter_has_customers.all().values_list("id"),
+    ).count()
+        == 0
+    ):
+        reason = (
+            f"Document customers {document.customers.all()} do not include"
+            f" {trigger.filter_has_customers.all()}",
         )
         trigger_matched = False
 
