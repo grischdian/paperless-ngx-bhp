@@ -92,7 +92,9 @@ def match_customers(document: Document, classifier: DocumentClassifier, user=Non
 
     if user is not None:
         customers = get_objects_for_user_owner_aware(
-            user, "documents.view_customer", Customer
+            user,
+            "documents.view_customer",
+            Customer,
         )
     else:
         customers = Tag.objects.all()
