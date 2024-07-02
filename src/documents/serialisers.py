@@ -697,7 +697,7 @@ class DocumentSerializer(
     NestedUpdateMixin,
     DynamicFieldsModelSerializer,
 ):
-    customer = CustomerField(many=True)
+    customers = CustomerField(many=True)
     correspondent = CorrespondentField(allow_null=True)
     tags = TagsField(many=True)
     document_type = DocumentTypeField(allow_null=True)
@@ -819,7 +819,7 @@ class DocumentSerializer(
         depth = 1
         fields = (
             "id",
-            "customer",
+            "customers",
             "correspondent",
             "document_type",
             "storage_path",
@@ -854,7 +854,7 @@ class SearchResultSerializer(DocumentSerializer):
                 "document_type",
                 "owner",
             )
-            .prefetch_related("tags", "custom_fields", "notes", "customer")
+            .prefetch_related("tags", "custom_fields", "notes", "customers")
             .get(id=instance["id"])
         )
         notes = ",".join(
